@@ -2,16 +2,11 @@ package ru.yandex.praktikum;
 
 import io.qameta.allure.Description;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import ru.yandex.praktikum.scooter.api.CourierClient;
 import ru.yandex.praktikum.scooter.api.model.Courier;
 import ru.yandex.praktikum.scooter.api.model.CourierCredentials;
-
-import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class CourierCreatingTest {
@@ -24,105 +19,149 @@ public class CourierCreatingTest {
     String firstName = RandomStringUtils.randomAlphabetic(5);
     String password2 = RandomStringUtils.randomAlphabetic(5);
     String firstName2 = RandomStringUtils.randomAlphabetic(5);
-    private CourierClient courierClient;
+    CourierClient courierClient;
+    int courierHappyCreatingStatus = 201;
+    String courierDuplicateMsg = "Этот логин уже используется. Попробуйте другой.";
+    int courierDuplicateStatus = 409;
+    String courierMussedDataMsg = "Недостаточно данных для создания учетной записи";
+    int courierMissedDataStatus = 400;
 
     @BeforeAll
     public void setUp() {
         courierClient = new CourierClient();
     }
 
+
     @Description("Курьера можно создать")
     @Test
     public void courierCanBeCreated() {
         Courier courier = Courier.getRandom();
-        ok = courierClient.create(courier);
-        courierId = courierClient.loginWithValidData(new CourierCredentials(courier.login, courier.password));
-
+        ok = courierClient.createCourier(courier);
+        courierId = courierClient.loginCourierWithValidData(new CourierCredentials(courier.login, courier.password));
+        courierClient.deleteCourier(courierId);
         assertTrue(ok);
-
-        courierClient.deleteCourier(courierId);
-
-
     }
 
-    @Description("Запрос возвращает правильный код ответа")
+    @Description("Запрос на создание курьера возвращает требуемый код ответа")
     @Test
-    public void requestReturnCorrectAnswerCode() {
+    public void courierCreatedSuccessfullyReturnCorrectStatusCode() {
         Courier courier = Courier.getRandom();
-        statusCode = courierClient.createExtractStatusCode(courier);
-        courierId = courierClient.loginWithValidData(new CourierCredentials(courier.login, courier.password));
-
-        assertThat(statusCode, equalTo(201));
-
+        statusCode = courierClient.createCourierReturnStatusCode(courier);
+        courierId = courierClient.loginCourierWithValidData(new CourierCredentials(courier.login, courier.password));
         courierClient.deleteCourier(courierId);
-
+        assertEquals(courierHappyCreatingStatus, statusCode);
     }
 
-    @Description("Успешный запрос возвращает ok:true")
+    @Description("Успешный запрос на создание курьера возвращает ok:true")
     @Test
-    public void requestReturnOkTrue() {
+    public void courierCreatedSuccessfullyReturnOkTrue() {
         Courier courier = Courier.getRandom();
-        ok = courierClient.create(courier);
-        courierId = courierClient.loginWithValidData(new CourierCredentials(courier.login, courier.password));
-
-        assertThat(ok, equalTo(true));
-
+        ok = courierClient.createCourier(courier);
+        courierId = courierClient.loginCourierWithValidData(new CourierCredentials(courier.login, courier.password));
         courierClient.deleteCourier(courierId);
-
+        assertEquals(true, ok );
     }
 
 
     @Description("Нельзя создать двух одинаковых курьеров")
     @Test
     public void errorWhenCreateCourierDuplicate() {
-        Courier courier = Courier.getRandom();
-        courierClient.create(courier);
-        message = courierClient.createDuplicate(courier);
-
-        assertThat(message, equalTo("Этот логин уже используется. Попробуйте другой."));
-
-
+        Courier courier = new Courier(login, password, firstName);
+        courierClient.createCourier(courier);
+        courierId = courierClient.loginCourierWithValidData(new CourierCredentials(courier.login, courier.password));
+        Courier courierTwin = new Courier(login, password, firstName);
+        message = courierClient.createCourierDuplicate(courierTwin);
+        courierClient.deleteCourier(courierId);
+        assertEquals(courierDuplicateMsg, message);
     }
+
+    @Description("Если создать двух одинаковых курьеров возвращается требуемый код ответа")
+    @Test
+    public void errorWhenCreateCourierDuplicateReturnCorrectStatusCode() {
+        Courier courier = new Courier(login, password, firstName);
+        courierClient.createCourier(courier);
+        courierId = courierClient.loginCourierWithValidData(new CourierCredentials(courier.login, courier.password));
+        Courier courierTwin = new Courier(login, password, firstName);
+        statusCode = courierClient.createCourierDuplicateReturnStatusCode(courierTwin);
+        courierClient.deleteCourier(courierId);
+        assertEquals(courierDuplicateStatus, statusCode );
+   }
 
     @Description("Если логина нет, запрос возвращает ошибку")
     @Test
     public void errorWhenCreateCourierMissedLogin() {
 
         Courier courier = new Courier(null, password, firstName);
-        message = courierClient.createWithMissedData(courier);
-        assertThat(message, equalTo("Недостаточно данных для создания учетной записи"));
+        message = courierClient.createCourierWithMissedData(courier);
+        assertEquals(courierMussedDataMsg, message );
+    }
 
+    @Description("Если логина нет, запрос возвращает требуемый код ответа")
+    @Test
+    public void createCourierMissedLoginReturnCorrectStatusCode() {
 
+        Courier courier = new Courier(null, password, firstName);
+        statusCode = courierClient.createCourierWithMissedDataReturnStatusCode(courier);
+        assertEquals(courierMissedDataStatus, statusCode);
     }
 
     @Description("Если пароля нет, запрос возвращает ошибку")
     @Test
     public void errorWhenCreateCourierMissedPassword() {
         Courier courier = new Courier(login, null, firstName);
-        message = courierClient.createWithMissedData(courier);
-        assertThat(message, equalTo("Недостаточно данных для создания учетной записи"));
+        message = courierClient.createCourierWithMissedData(courier);
+        assertEquals(courierMussedDataMsg, message );
+    }
 
-
+    @Description("Если пароля нет, запрос возвращает требуемый код ответа")
+    @Test
+    public void createCourierMissedPasswordReturnCorrectStatusCode() {
+        Courier courier = new Courier(login, null, firstName);
+        statusCode = courierClient.createCourierWithMissedDataReturnStatusCode(courier);
+        assertEquals(courierMissedDataStatus, statusCode );
     }
 
     @Description("Если имени нет, запрос возвращает ошибку")
     @Test
     public void errorWhenCreateCourierMissedFirstName() {
         Courier courier = new Courier(login, password, null);
-        message = courierClient.createWithMissedData(courier);
-        assertThat(message, equalTo("Недостаточно данных для создания учетной записи"));
+        message = courierClient.createCourierWithMissedData(courier);
+        courierId = courierClient.loginCourierWithValidData(new CourierCredentials(courier.login, courier.password));
+        courierClient.deleteCourier(courierId);
+        assertEquals(courierMussedDataMsg, message );
+    }
 
+    @Description("Если имени нет, запрос возвращает требуемый код ответа")
+    @Test
+    public void createCourierMissedFirstNameReturnCorrectStatusCode() {
+        Courier courier = new Courier(login, password, null);
+        statusCode = courierClient.createCourierWithMissedDataReturnStatusCode(courier);
+        courierId = courierClient.loginCourierWithValidData(new CourierCredentials(courier.login, courier.password));
+        courierClient.deleteCourier(courierId);
+        assertEquals(courierMissedDataStatus, statusCode);
     }
 
     @Description("Если создать пользователя с логином, который уже есть, возвращается ошибка")
     @Test
     public void errorWhenCreateLoginDuplicate() {
         Courier courier = new Courier(login, password, firstName);
-        courierClient.create(courier);
+        courierClient.createCourier(courier);
+        courierId = courierClient.loginCourierWithValidData(new CourierCredentials(courier.login, courier.password));
         Courier courierTwinLogin = new Courier(login, password2, firstName2);
-        message = courierClient.createDuplicate(courierTwinLogin);
-        assertThat(message, equalTo("Этот логин уже используется. Попробуйте другой."));
+        message = courierClient.createCourierDuplicate(courierTwinLogin);
+        courierClient.deleteCourier(courierId);
+        assertEquals(courierDuplicateMsg, message);
+    }
 
-
+    @Description("Если создать пользователя с логином, который уже есть, возвращается требуемый код ответа")
+    @Test
+    public void createLoginDuplicateReturnCorrectStatusCode() {
+        Courier courier = new Courier(login, password, firstName);
+        courierClient.createCourier(courier);
+        courierId = courierClient.loginCourierWithValidData(new CourierCredentials(courier.login, courier.password));
+        Courier courierTwinLogin = new Courier(login, password2, firstName2);
+        statusCode = courierClient.createCourierDuplicateReturnStatusCode(courierTwinLogin);
+        courierClient.deleteCourier(courierId);
+        assertEquals(courierDuplicateStatus, statusCode);
     }
 }

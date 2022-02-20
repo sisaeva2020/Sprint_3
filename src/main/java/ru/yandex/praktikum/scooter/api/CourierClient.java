@@ -1,6 +1,7 @@
 package ru.yandex.praktikum.scooter.api;
 
 import io.qameta.allure.Step;
+import io.restassured.response.Response;
 import ru.yandex.praktikum.scooter.api.model.Courier;
 import ru.yandex.praktikum.scooter.api.model.CourierCredentials;
 
@@ -12,115 +13,149 @@ public class CourierClient extends ScooterRestClient {
 
 
     @Step("Create courier {courier}")
-    public boolean create(Courier courier) {
+    public boolean createCourier(Courier courier) {
         return given()
                 .spec(getBaseSpec())
                 .body(courier)
                 .when()
                 .post(PATH)
                 .then()
-                .assertThat()
-                .statusCode(201)
                 .extract()
                 .path("ok");
     }
-    @Step("Create courier {courier} with extract status code")
-    public int createExtractStatusCode(Courier courier) {
+
+    @Step("Create courier {courier} status code 201")
+    public int createCourierReturnStatusCode(Courier courier) {
         return given()
                 .spec(getBaseSpec())
                 .body(courier)
                 .when()
                 .post(PATH)
                 .then()
-                .assertThat()
-                .statusCode(201)
                 .extract()
                 .statusCode();
     }
 
 
     @Step("Create courier {courier} with missed data")
-    public String createWithMissedData(Courier courier) {
+    public String createCourierWithMissedData(Courier courier) {
         return given()
                 .spec(getBaseSpec())
                 .body(courier)
                 .when()
                 .post(PATH)
                 .then()
-                .assertThat()
-                .statusCode(400)
                 .extract()
                 .path("message");
+    }
+
+    @Step("Create courier {courier} with missed data status code 400")
+    public int createCourierWithMissedDataReturnStatusCode(Courier courier) {
+        return given()
+                .spec(getBaseSpec())
+                .body(courier)
+                .when()
+                .post(PATH)
+                .then()
+                .extract()
+                .statusCode();
+
     }
 
     @Step("Create courier {courier} duplicate")
-    public String createDuplicate (Courier courier) {
+    public String createCourierDuplicate (Courier courier) {
         return given()
                 .spec(getBaseSpec())
                 .body(courier)
                 .when()
                 .post(PATH)
                 .then()
-                .assertThat()
-                .statusCode(409)
                 .extract()
                 .path("message");
     }
 
+    @Step("Create courier {courier} duplicate 409")
+    public int createCourierDuplicateReturnStatusCode (Courier courier) {
+        return given()
+                .spec(getBaseSpec())
+                .body(courier)
+                .when()
+                .post(PATH)
+                .then()
+                .extract()
+                .statusCode();
+    }
+
     @Step("Login as {courierCredentials} with valid data")
-    public int loginWithValidData (CourierCredentials courierCredentials) {
+    public int loginCourierWithValidData (CourierCredentials courierCredentials) {
         return given()
                 .spec(getBaseSpec())
                 .body(courierCredentials)
                 .when()
                 .post(PATH + "login/")
                 .then()
-                .assertThat()
-                .statusCode(200)
                 .extract()
                 .path("id");
     }
 
-    @Step("Login as {courierCredentials} with extract statusCode")
-    public int loginWithValidDataReturnStatusCode (CourierCredentials courierCredentials) {
+    @Step("Login as {courierCredentials} with valid data 200")
+    public int loginCourierWithValidDataReturnStatusCode (CourierCredentials courierCredentials) {
         return given()
                 .spec(getBaseSpec())
                 .body(courierCredentials)
                 .when()
                 .post(PATH + "login/")
                 .then()
-                .assertThat()
-                .statusCode(200)
                 .extract()
                 .statusCode();
     }
 
     @Step("Login as {courierCredentials} with incorrect data")
-    public String loginWithIncorrectData (CourierCredentials courierCredentials) {
+    public String loginCourierWithIncorrectData (CourierCredentials courierCredentials) {
         return given()
                 .spec(getBaseSpec())
                 .body(courierCredentials)
                 .when()
                 .post(PATH + "login/")
                 .then()
-                .assertThat()
-                .statusCode(404)
                 .extract()
                 .path("message");
     }
 
-    @Step("Login as {courierCredentials} with missed data")
-    public String loginWithMissedData (CourierCredentials courierCredentials) {
+    @Step("Login as {courierCredentials} with incorrect data 404")
+    public int loginCourierWithIncorrectDataReturnStatusCode (CourierCredentials courierCredentials) {
         return given()
                 .spec(getBaseSpec())
                 .body(courierCredentials)
                 .when()
                 .post(PATH + "login/")
                 .then()
-                .assertThat()
-                .statusCode(400)
+                .extract()
+                .statusCode();
+    }
+
+    @Step("Login as {courierCredentials} with missed data")
+    public String loginCourierWithMissedData (CourierCredentials courierCredentials) {
+        return given()
+                .spec(getBaseSpec())
+                .body(courierCredentials)
+                .when()
+                .post(PATH + "login/")
+                .then()
                 .extract()
                 .path("message");
+    }
+
+    @Step("Login as {courierCredentials} with missed data 400")
+    public int loginCourierWithMissedDataReturnStatusCode (CourierCredentials courierCredentials) {
+        return given()
+                .spec(getBaseSpec())
+                .body(courierCredentials)
+                .when()
+                .post(PATH + "login/")
+                .then()
+                .extract()
+                .statusCode();
     }
 
 
@@ -131,10 +166,10 @@ public class CourierClient extends ScooterRestClient {
                 .when()
                 .delete(PATH + courierId)
                 .then()
-                .assertThat()
-                .statusCode(200)
                 .extract()
-                .path("ok");
+                .path( "ok");
+
     }
+
 
 }

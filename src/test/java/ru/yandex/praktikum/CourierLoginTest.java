@@ -8,39 +8,39 @@ import org.junit.jupiter.api.TestInstance;
 import ru.yandex.praktikum.scooter.api.CourierClient;
 import ru.yandex.praktikum.scooter.api.model.Courier;
 import ru.yandex.praktikum.scooter.api.model.CourierCredentials;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class CourierLoginTest {
-    private CourierClient courierClient;
-    private int courierId;
-    private String login2 = RandomStringUtils.randomAlphabetic(5);
-    private String password2 = RandomStringUtils.randomAlphabetic(5);
+    CourierClient courierClient;
+    int courierId;
+    String login2 = RandomStringUtils.randomAlphabetic(5);
+    String password2 = RandomStringUtils.randomAlphabetic(5);
     String message;
     int statusCode;
+    int happyLoginStatus = 200;
+    String loginIncorrectDataMsg = "Учетная запись не найдена";
+    int loginIncorrectDataStatus = 404;
+    String loginMissedDataMsg = "Недостаточно данных для входа";
+    int loginMissedDataStatus = 400;
 
     @BeforeAll
     public void setUp() {
         courierClient = new CourierClient();
     }
 
+
     @Description("Курьер может авторизоваться")
     @Test
     public void courierCanLoginSuccessfully() {
 
         Courier courier = Courier.getRandom();
-        courierClient.create(courier);
-        statusCode = courierClient.loginWithValidDataReturnStatusCode(new CourierCredentials(courier.login, courier.password));
-        courierId = courierClient.loginWithValidData(new CourierCredentials(courier.login, courier.password));
-
-        assertThat(statusCode, equalTo(200));
-
+        courierClient.createCourier(courier);
+        statusCode = courierClient.loginCourierWithValidDataReturnStatusCode(new CourierCredentials(courier.login, courier.password));
+        courierId = courierClient.loginCourierWithValidData(new CourierCredentials(courier.login, courier.password));
         courierClient.deleteCourier(courierId);
-
+        assertEquals(happyLoginStatus, statusCode);
     }
 
     @Description("Успешный запрос возвращает id")
@@ -48,22 +48,29 @@ public class CourierLoginTest {
     public void RequestReturnCourierId() {
 
         Courier courier = Courier.getRandom();
-        courierClient.create(courier);
-        courierId = courierClient.loginWithValidData(new CourierCredentials(courier.login, courier.password));
-
-        assertThat(courierId, is(not(0)));
-
+        courierClient.createCourier(courier);
+        courierId = courierClient.loginCourierWithValidData(new CourierCredentials(courier.login, courier.password));
         courierClient.deleteCourier(courierId);
-
+        assertNotEquals(0, courierId);
     }
 
     @Description("Система вернёт ошибку, если неправильно указать логин")
     @Test
     public void returnErrorWithIncorrectLogin() {
         Courier courier = Courier.getRandom();
-        courierClient.create(courier);
-        message = courierClient.loginWithIncorrectData(new CourierCredentials(login2, courier.password));
-        assertThat(message, equalTo("Учетная запись не найдена"));
+        courierClient.createCourier(courier);
+        message = courierClient.loginCourierWithIncorrectData(new CourierCredentials(login2, courier.password));
+        assertEquals(loginIncorrectDataMsg, message);
+
+    }
+
+    @Description("Система вернёт требуемый код, если неправильно указать логин")
+    @Test
+    public void incorrectLoginReturnCorrectStatusCode() {
+        Courier courier = Courier.getRandom();
+        courierClient.createCourier(courier);
+        statusCode = courierClient.loginCourierWithIncorrectDataReturnStatusCode(new CourierCredentials(login2, courier.password));
+        assertEquals(loginIncorrectDataStatus, statusCode);
 
     }
 
@@ -71,40 +78,73 @@ public class CourierLoginTest {
     @Test
     public void returnErrorWithIncorrectPassword() {
         Courier courier = Courier.getRandom();
-        courierClient.create(courier);
-        message = courierClient.loginWithIncorrectData(new CourierCredentials(courier.login, password2));
-        assertThat(message, equalTo("Учетная запись не найдена"));
+        courierClient.createCourier(courier);
+        message = courierClient.loginCourierWithIncorrectData(new CourierCredentials(courier.login, password2));
+        assertEquals(loginIncorrectDataMsg, message);
+    }
 
+
+    @Description("Система вернёт требуемый код, если неправильно указать пароль")
+    @Test
+    public void incorrectPasswordReturnCorrectStatusCode() {
+        Courier courier = Courier.getRandom();
+        courierClient.createCourier(courier);
+        statusCode = courierClient.loginCourierWithIncorrectDataReturnStatusCode(new CourierCredentials(courier.login, password2));
+        assertEquals(loginIncorrectDataStatus, statusCode);
     }
 
     @Description("Если авторизоваться под несуществующим пользователем, запрос возвращает ошибку")
     @Test
     public void returnErrorIfLoginWithNonExistentCredentials() {
         Courier courier = Courier.getRandom();
-        courierClient.create(courier);
-        message = courierClient.loginWithIncorrectData(new CourierCredentials(login2, password2));
-        assertThat(message, equalTo("Учетная запись не найдена"));
+        courierClient.createCourier(courier);
+        message = courierClient.loginCourierWithIncorrectData(new CourierCredentials(login2, password2));
+        assertEquals(loginIncorrectDataMsg, message);
+    }
 
+    @Description("Если авторизоваться под несуществующим пользователем, запрос возвращает требуемый код")
+    @Test
+    public void loginWithNonExistentCredentialsReturnCorrectStatusCode() {
+        Courier courier = Courier.getRandom();
+        courierClient.createCourier(courier);
+        statusCode = courierClient.loginCourierWithIncorrectDataReturnStatusCode(new CourierCredentials(login2, password2));
+        assertEquals(loginIncorrectDataStatus, statusCode);
     }
 
     @Description("Если логина нет, запрос возвращает ошибку")
     @Test
     public void returnErrorWithMissedLogin() {
         Courier courier = Courier.getRandom();
-        courierClient.create(courier);
-        message = courierClient.loginWithMissedData(new CourierCredentials(null, courier.password));
-        assertThat(message, equalTo("Недостаточно данных для входа"));
+        courierClient.createCourier(courier);
+        message = courierClient.loginCourierWithMissedData(new CourierCredentials(null, courier.password));
+        assertEquals(loginMissedDataMsg, message);
+    }
 
+    @Description("Если логина нет, запрос возвращает требуемый код")
+    @Test
+    public void missedLoginReturnCorrectStatusCode() {
+        Courier courier = Courier.getRandom();
+        courierClient.createCourier(courier);
+        statusCode = courierClient.loginCourierWithMissedDataReturnStatusCode(new CourierCredentials(null, courier.password));
+        assertEquals(loginMissedDataStatus, statusCode);
     }
 
     @Description("Если пароля нет, запрос возвращает ошибку")
     @Test
     public void returnErrorWithMissedPassword() {
         Courier courier = Courier.getRandom();
-        courierClient.create(courier);
-        message = courierClient.loginWithMissedData(new CourierCredentials(courier.login, null));
-        assertThat(message, equalTo("Недостаточно данных для входа"));
+        courierClient.createCourier(courier);
+        message = courierClient.loginCourierWithMissedData(new CourierCredentials(courier.login, null));
+        assertEquals(loginMissedDataMsg, message);
+    }
 
+    @Description("Если пароля нет, запрос возвращает требуемый код")
+    @Test
+    public void missedPasswordReturnCorrectStatusCode() {
+        Courier courier = Courier.getRandom();
+        courierClient.createCourier(courier);
+        statusCode = courierClient.loginCourierWithMissedDataReturnStatusCode(new CourierCredentials(courier.login, null));
+        assertEquals(loginMissedDataStatus, statusCode);
     }
 
 }

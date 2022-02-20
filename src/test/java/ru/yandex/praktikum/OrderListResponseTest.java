@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import ru.yandex.praktikum.scooter.api.OrderClient;
 import java.util.ArrayList;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class OrderListResponseTest {
@@ -23,7 +23,7 @@ public class OrderListResponseTest {
     public void requestShouldBeReturnOrdersList() {
         orderList = orderClient.getOrderList();
 
-        assertFalse(orderList.isEmpty());
+        assertEquals(false, orderList.isEmpty());
 
     }
 }

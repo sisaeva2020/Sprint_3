@@ -1,54 +1,71 @@
 package ru.yandex.praktikum;
 
-import io.qameta.allure.Description;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import ru.yandex.praktikum.scooter.api.OrderClient;
 import ru.yandex.praktikum.scooter.api.model.Order;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.*;
 
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+
+@RunWith(Parameterized.class)
 public class OrderCreatingTest {
-    int track;
-    public String firstName;
-    public String lastName;
-    public String address;
-    public String metroStation;
-    public String phone;
-    public String rentTime;
-    public String deliveryDate;
-    public String comment;
-    public String[] color;
-    private OrderClient orderClient;
 
-    @BeforeAll
-    public void setUp() {
-        orderClient = new OrderClient();
+    int track;
+    private final String firstName;
+    private final String lastName;
+    private final String address;
+    private final String metroStation;
+    private final String phone;
+    private final String rentTime;
+    private final String deliveryDate;
+    private final String comment;
+    private final String[] color;
+    private static String firstNameParam = RandomStringUtils.randomAlphabetic(5);
+    private static String lastNameParam = RandomStringUtils.randomAlphabetic(5);
+    private static String addressParam = RandomStringUtils.randomAlphabetic(7);
+    private static String metroStationParam = RandomStringUtils.randomNumeric(2);
+    private static String phoneParam = RandomStringUtils.randomNumeric(11);;
+    private static String rentTimeParam = RandomStringUtils.randomNumeric(1);;
+    private static String deliveryDateParam = RandomStringUtils.randomNumeric(4);;
+    private static String commentparam = RandomStringUtils.randomAlphabetic(10);
+    private static String[] colorBlack = new String[] {"BlACK"};
+    private static String[] colorGrey = new String[] {"GREY"};
+    private static String[] colorBlackGrey = new String[] {"BlACK","GREY"};
+
+    public OrderCreatingTest(String firstName, String lastName, String address, String metroStation, String phone, String rentTime, String deliveryDate, String comment, String[] color) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.address = address;
+        this.metroStation = metroStation;
+        this.phone = phone;
+        this.rentTime = rentTime;
+        this.deliveryDate = deliveryDate;
+        this. comment = comment;
+        this.color = color;
+
     }
 
-    @ParameterizedTest
-    @CsvSource({"'max', 'max', 'jfgasjk', '124', '8906457865', '4', '2022', 'jhsahsdafsd', '{\"GREY\"}'",
-            "'leo','leo','jhsfgws','124','89067853245','4','2022','jhsahsdafsd', '{\"GREY\", \"BLACK\"}'",
-            "'roi', 'roi', 'llzuutyrt', '124', '8906785466', '4', '2022', 'kjghbiufhi'"})
+    @Parameterized.Parameters
+    public static Object[] getOrderData() {
+        return new Object[][]{
+                {firstNameParam, lastNameParam, addressParam, metroStationParam, phoneParam, rentTimeParam, deliveryDateParam, commentparam, colorBlack},
+                {firstNameParam, lastNameParam, addressParam, metroStationParam, phoneParam, rentTimeParam, deliveryDateParam, commentparam, colorGrey},
+                {firstNameParam, lastNameParam, addressParam, metroStationParam, phoneParam, rentTimeParam, deliveryDateParam, commentparam, colorBlackGrey},
+                {firstNameParam, lastNameParam, addressParam, metroStationParam, phoneParam, rentTimeParam, deliveryDateParam, commentparam, null}
+        };
+    }
 
-
-
-    @Description("Можно указать один из цветов, Можно указать оба цвета, Можно совсем не указывать цвет, тело ответа содержит track")
     @Test
     public void orderCanBeCreatedWithBlackOrGreyColor() {
+        OrderClient orderClient = new OrderClient();
         Order order = new Order(firstName, lastName, address, metroStation, phone, rentTime, deliveryDate, comment, color);
         track = orderClient.createOrder(order);
-
-        assertThat(track, is(not(0)));
-
-        orderClient.cancelOrder(track);
+        assertNotEquals(0, track);
 
     }
-
 }
+
